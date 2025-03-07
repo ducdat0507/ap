@@ -1,3 +1,8 @@
 {
-    "dotnet.defaultSolution": "Project1.sln"
+    "dotnet.defaultSolution": "Project1.sln",
+    "explorer.sortOrder": "type",
+    "files.exclude": {
+        "**/bin": true,
+        "**/obj": true
+    }
 }
