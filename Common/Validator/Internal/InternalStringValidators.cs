@@ -60,15 +60,18 @@ namespace Validator.Internal
         {
             readonly System.Text.RegularExpressions.Regex Pattern;
 
-            public Regex (InternalValidator<string, string> parent, System.Text.RegularExpressions.Regex pattern) : base(parent)
+            readonly string? Message;
+
+            public Regex (InternalValidator<string, string> parent, System.Text.RegularExpressions.Regex pattern, string? message = null) : base(parent)
             {
                 Pattern = pattern;
+                Message = message;
             }
 
             protected override string ValidateMid(string input)
             {
                 if (!Pattern.IsMatch(input)) throw new ValidatorFailedException(
-                    $"Input must match the following regex pattern: {Pattern}"
+                    Message ?? $"Input must match the following regex pattern: {Pattern}"
                 );
                 return input;
             } 

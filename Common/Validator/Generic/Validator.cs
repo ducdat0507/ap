@@ -20,7 +20,8 @@ namespace Validator.Generic
         }
     }
 
-    public abstract class RequiredValidator<T> : Validator<T> 
+    public abstract class RequiredValidator<T, TSelf> : Validator<T> 
+        where TSelf : RequiredValidator<T, TSelf>
     {
         private protected InternalValidator<string, T> InternalValidator;
 
@@ -29,9 +30,25 @@ namespace Validator.Generic
             if (string.IsNullOrWhiteSpace(input)) throw new ValidatorFailedException("Field is required");
             return InternalValidator.Validate(input.Trim());
         }
+
+        public TSelf OneOf(params T[] values) 
+        {
+            InternalValidator = new InternalGenericValidators.OneOf<T>(InternalValidator, values);
+            return (TSelf)this;
+        }
+        public TSelf Callback(Func<T, bool> callback, string failMessage) 
+        {
+            InternalValidator = new InternalGenericValidators.Callback<T>(InternalValidator, callback, failMessage);
+            return (TSelf)this;
+        }
+        public TSelf Transform(Func<T, T> values) 
+        {
+            InternalValidator = new InternalGenericValidators.Transform<T>(InternalValidator, values);
+            return (TSelf)this;
+        }
     }
 
-    public abstract class OptionalValidator<T> : Validator<T?> 
+    public abstract class OptionalValidator<T> : Validator<T?>
     {
         private protected InternalValidator<string, T> InternalValidator;
         private protected T? DefaultValue = default;

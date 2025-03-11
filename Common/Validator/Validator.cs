@@ -5,7 +5,7 @@ using System.Numerics;
 
 namespace Validator 
 {
-    public class Validator : RequiredValidator<string>
+    public class Validator : RequiredValidator<string, Validator>
     {
         public Validator() 
         {
@@ -27,14 +27,9 @@ namespace Validator
             InternalValidator = new InternalStringValidators.Email(InternalValidator);
             return this;
         }
-        public Validator Regex(Regex pattern) 
+        public Validator Regex(Regex pattern, string? message = null) 
         {
-            InternalValidator = new InternalStringValidators.Regex(InternalValidator, pattern);
-            return this;
-        }
-        public Validator OneOf(params string[] values) 
-        {
-            InternalValidator = new InternalGenericValidators.OneOf<string>(InternalValidator, values);
+            InternalValidator = new InternalStringValidators.Regex(InternalValidator, pattern, message);
             return this;
         }
 

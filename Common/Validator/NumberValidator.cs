@@ -5,7 +5,7 @@ using System.Numerics;
 
 namespace Validator 
 {
-    public class NumberValidator<T> : RequiredValidator<T> where T : INumber<T>
+    public class NumberValidator<T> : RequiredValidator<T, NumberValidator<T>> where T : INumber<T>
     {
         internal NumberValidator (InternalValidator<string, T> internalValidator)
         {
