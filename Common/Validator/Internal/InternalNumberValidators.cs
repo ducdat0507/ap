@@ -24,6 +24,24 @@ namespace Validator.Internal
             } 
         }
 
+        public class GreaterThanOrEqual<T> : InternalChainedValidator<string, T, T> where T : INumber<T>
+        {
+            readonly T Value;
+
+            public GreaterThanOrEqual(InternalValidator<string, T> parent, T value) : base(parent)
+            {
+                Value = value;
+            }
+
+            protected override T ValidateMid(T input)
+            {
+                if (!(input >= Value)) throw new ValidatorFailedException(
+                    $"Input must be greater than or equal to {Value}"
+                );
+                return input;
+            } 
+        }
+
         public class InRange<T> : InternalChainedValidator<string, T, T> where T : INumber<T>
         {
             readonly T Min;

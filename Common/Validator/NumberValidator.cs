@@ -17,17 +17,17 @@ namespace Validator
             InternalValidator = new InternalNumberValidators.GreaterThan<T>(InternalValidator, value);
             return this;
         }
+        public NumberValidator<T> GreaterThanOrEqual(T value) 
+        {
+            InternalValidator = new InternalNumberValidators.GreaterThanOrEqual<T>(InternalValidator, value);
+            return this;
+        }
         public NumberValidator<T> InRange(T min, T max) 
         {
             InternalValidator = new InternalNumberValidators.InRange<T>(InternalValidator, min, max);
             return this;
         }
-        public NumberValidator<T> OneOf(params T[] values) 
-        {
-            InternalValidator = new InternalGenericValidators.OneOf<T>(InternalValidator, values);
-            return this;
-        }
-
+        
         public OptionalNumberValidator<T> Optional() 
         {
             return new OptionalNumberValidator<T>(InternalValidator);
