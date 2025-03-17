@@ -5,11 +5,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+builder.Services.AddCors(action => {
+    action.AddDefaultPolicy(builder => {
+        builder.WithOrigins("localhost").AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+    });
+});
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddSignalR();
 
 builder.Services.AddHostedService<PeriodicPerformanceCheckupService>();
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -19,14 +24,14 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
+app.MapHub<PerformanceCheckupHub>("/api/hubs/performance");
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller}/{action=Index}/{id?}");
 app.MapFallbackToFile("index.html");
-app.MapHub<PerformanceCheckupHub>("api/hubs/performance");
 
 app.Run();

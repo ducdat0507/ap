@@ -1,14 +1,22 @@
 <script lang="ts">
-    import { HubConnectionBuilder } from "@microsoft/signalr";
+    import { HttpTransportType, HubConnectionBuilder } from "@microsoft/signalr";
     import { onMount } from "svelte";
+    
+    let info: {};
 
-    onMount(() => {
-        let connection = new HubConnectionBuilder().withUrl("api/hub/performance").build();
-        connection.on("update", () => {
-            console.log("update called");
-        })
+    onMount(async () => {
+        let connection = new HubConnectionBuilder()
+            .withUrl("/api/hubs/performance", {
+                skipNegotiation: true,
+                transport: HttpTransportType.WebSockets
+            })
+            .build();
+        connection.on("update", (inf) => {
+            info = inf;
+        });
+        await connection.start();
     })
 </script>
 
 <h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
+<p>{JSON.stringify(info)}</p>

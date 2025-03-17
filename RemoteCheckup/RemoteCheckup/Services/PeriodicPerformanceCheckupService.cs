@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using System.Diagnostics;
 using RemoteCheckup.Hubs;
+using Microsoft.VisualBasic;
+using RemoteCheckup.Models;
 
 namespace RemoteCheckup.Services
 {
@@ -36,14 +38,19 @@ namespace RemoteCheckup.Services
 
         protected async Task DoCheckup()
         {
-            string message = "Performance not available";
+            PerformanceInfo? info = null;
             if (OperatingSystem.IsWindows()) // standard guard examples
             {
-                message = string.Join("\n", PerformanceCounterCategory.GetCategories().Select(x => x.CategoryName));
+                var cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+                var ramCounter = new PerformanceCounter("Memory", "Available MBytes");
+                info = new();
+                info.Processors.Add(new () {
+                    Usage = {cpuCounter.NextValue()},
+                });
             }
 
-            // _logger.LogInformation(message);
-            await _hubContext.Clients.All.SendAsync("update", message);
+            _logger.LogInformation(info?.ToString() ?? null);
+            await _hubContext.Clients.All.SendAsync("update", info);
         }
     }
 }
