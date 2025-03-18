@@ -3,6 +3,8 @@ using System.Diagnostics;
 using RemoteCheckup.Hubs;
 using Microsoft.VisualBasic;
 using RemoteCheckup.Models;
+using System.Text.Json;
+using RemoteCheckup.SubServices;
 
 namespace RemoteCheckup.Services
 {
@@ -11,10 +13,14 @@ namespace RemoteCheckup.Services
         private readonly IHubContext<PerformanceCheckupHub> _hubContext;
         private readonly ILogger<PeriodicPerformanceCheckupService> _logger;
 
+        private PerformanceCheckupSubService subService;
+
         public PeriodicPerformanceCheckupService(IHubContext<PerformanceCheckupHub> hubContext, ILogger<PeriodicPerformanceCheckupService> logger)
         {
             _hubContext = hubContext;
             _logger = logger;
+
+            if (OperatingSystem.IsWindows()) subService = new PerformanceCheckupOnWindowsSubService();
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -38,18 +44,13 @@ namespace RemoteCheckup.Services
 
         protected async Task DoCheckup()
         {
-            PerformanceInfo? info = null;
-            if (OperatingSystem.IsWindows()) // standard guard examples
-            {
-                var cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
-                var ramCounter = new PerformanceCounter("Memory", "Available MBytes");
-                info = new();
-                info.Processors.Add(new () {
-                    Usage = {cpuCounter.NextValue()},
-                });
-            }
+            PerformanceInfo? info = subService?.GetPerformanceInfo();
+            await SetCurrentInfo(info);
+        }
 
-            _logger.LogInformation(info?.ToString() ?? null);
+        protected async Task SetCurrentInfo(PerformanceInfo? info)
+        {
+            PerformanceCheckupHub.CurrentInfo = info;
             await _hubContext.Clients.All.SendAsync("update", info);
         }
     }

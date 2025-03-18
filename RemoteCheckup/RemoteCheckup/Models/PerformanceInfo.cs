@@ -5,12 +5,13 @@ namespace RemoteCheckup.Models
     [Serializable]
     public class PerformanceInfo
     {
-        public class CPUInfo 
-        {
-            public List<double> Usage = new();
-        }
+        public List<CPUInfo> Processors { get; set; } = new();
+    }
 
-        public List<CPUInfo> Processors = new();
+    [Serializable]
+    public class CPUInfo
+    {
+        public List<float> Usage { get; set; } = new();
     }
 
 }
