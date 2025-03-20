@@ -28,8 +28,8 @@ namespace RemoteCheckup.SubServices
                 {
                     Name = (string)mo["Name"],
                     Index = (string)mo["Name"] == "_Total" ? -1 : Convert.ToInt32(mo["Name"]),
-                    Usage = (float)(ulong)mo["PercentProcessorTime"] / (ulong)mo["Frequency_PerfTime"],
-                    Timestamp = (float)(ulong)mo["Timestamp_PerfTime"] / (ulong)mo["Frequency_PerfTime"],
+                    Usage = (float)(ulong)mo["PercentProcessorTime"],
+                    Timestamp = (float)(ulong)mo["Timestamp_PerfTime"],
                 }
                 )
                 .ToList();
@@ -41,10 +41,12 @@ namespace RemoteCheckup.SubServices
                     .Select(x => {
                         float actualTime = lastCpuTime.TryGetValue(x.Name, out float lastTime)
                             ? (x.Usage - lastTime) : 0;
-                        float duration = lastCpuTime.TryGetValue(x.Name, out float lastTimestamp)
+                        float duration = lastCpuTimestamp.TryGetValue(x.Name, out float lastTimestamp)
                             ? (x.Timestamp - lastTimestamp) : 0;
-                        actualTime = 1 - actualTime / duration;
+                        actualTime = Math.Max(1 - actualTime / duration, 0);
+                        if (!float.IsFinite(actualTime)) actualTime = 0;
                         lastCpuTime[x.Name] = x.Usage;
+                        lastCpuTimestamp[x.Name] = x.Timestamp;
                         return actualTime;
                     }).ToList(),
             });

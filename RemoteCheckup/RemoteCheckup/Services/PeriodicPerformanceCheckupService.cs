@@ -27,7 +27,7 @@ namespace RemoteCheckup.Services
         {
             _logger.LogInformation("Periodic performance checkup service started");
 
-            using PeriodicTimer timer = new(TimeSpan.FromSeconds(3));
+            using PeriodicTimer timer = new(TimeSpan.FromSeconds(1));
 
             try
             {
