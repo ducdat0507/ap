@@ -1,8 +1,8 @@
 <script lang="ts">
     let {
         values = [],
-        width = null,
-        height = null
+        width = 60,
+        height = 30
     } = $props();
 
     function getLinePath() {
@@ -21,7 +21,7 @@
 </script>
 
 <div class="graph-box">
-    <svg class="graph-box-svg" width={width} height={height}>
+    <svg class="graph-box-svg" viewBox={`0 0 ${width} ${height}`}>
         <rect class="graph-box-border" x={0} y={0} width={width} height={height} />
         <path class="graph-box-fill" d={linePath + ` L ${width} ${height} L 0 ${height}`} />
         <path class="graph-box-line" d={linePath} />

@@ -21,6 +21,7 @@ namespace RemoteCheckup.Services
             _logger = logger;
 
             if (OperatingSystem.IsWindows()) subService = new PerformanceCheckupOnWindowsSubService();
+            else if (OperatingSystem.IsLinux()) subService = new PerformanceCheckupOnLinuxSubService();
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)

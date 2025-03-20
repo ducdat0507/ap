@@ -21,6 +21,7 @@
 		"vite": "^6.0.0"
 	},
 	"dependencies": {
+		"@iconify/svelte": "^4.2.0",
 		"@microsoft/signalr": "^8.0.7"
 	}
 }
