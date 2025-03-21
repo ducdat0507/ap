@@ -10,7 +10,8 @@
     let cpuGraphTotalValues: number[][] = [];
     let cpuGraphValues: number[][][] = [];
 
-    let memGraphValues: number[] = undefined;
+    let memGraphValues: number[] | undefined = undefined;
+    let swapGraphValues: number[] | undefined = undefined;
 
     onMount(async () => {
         let connection = new HubConnectionBuilder()
@@ -48,9 +49,16 @@
             if (memGraphValues == undefined) {
                 memGraphValues= new Array(50).fill(0);
             }
-            memGraphValues.push(info.memory.usedBytes / info.memory.totalBytes);
+            memGraphValues.push(info.memory.usedPhys / info.memory.totalPhys);
             memGraphValues.shift();
             memGraphValues = memGraphValues;
+
+            if (swapGraphValues == undefined) {
+                swapGraphValues = new Array(50).fill(0);
+            }
+            swapGraphValues.push(info.memory.usedSwap / info.memory.totalSwap);
+            swapGraphValues.shift();
+            swapGraphValues = swapGraphValues;
         });
         await connection.start();
     })
@@ -69,19 +77,35 @@
         {/each}
 
         {#if info?.memory}
+            <hr/>
             <button class="perf-item mem">
                 <GraphBox values={memGraphValues} />
                 <div class="info">
                     <h2><b>MEMORY</b></h2>
                     <p>
-                        {(info?.memory.usedBytes / info?.memory.totalBytes * 100).toFixed(1)}%
+                        {(info?.memory.usedPhys / info?.memory.totalPhys * 100).toFixed(1)}%
                     </p>
                     <p>
-                        {(info?.memory.usedBytes / 2 ** 30 || 0).toFixed(2)} / 
-                        {(info?.memory.totalBytes / 2 ** 30 || 0).toFixed(2)} GiB
+                        {(info?.memory.usedPhys / 2 ** 30 || 0).toFixed(2)} / 
+                        {(info?.memory.totalPhys / 2 ** 30 || 0).toFixed(2)} GiB
                     </p>
                 </div>
             </button>
+            {#if info.memory.totalSwap > 0}
+                <button class="perf-item mem">
+                    <GraphBox values={swapGraphValues} />
+                    <div class="info">
+                        <h2><b>SWAP</b></h2>
+                        <p>
+                            {(info?.memory.usedSwap / info?.memory.totalSwap * 100).toFixed(1)}%
+                        </p>
+                        <p>
+                            {(info?.memory.usedSwap / 2 ** 30 || 0).toFixed(2)} / 
+                            {(info?.memory.totalSwap / 2 ** 30 || 0).toFixed(2)} GiB
+                        </p>
+                    </div>
+                </button>
+            {/if}
         {/if}
     </aside>
     <main>
@@ -113,6 +137,11 @@
     .perf-container main {
         padding: 10px;
         flex: 1;
+    }
+    .perf-container aside hr {
+        border: none;
+        border-bottom: 1px solid #7777;
+        margin: 5px;
     }
 
     .perf-item {

@@ -73,17 +73,27 @@ namespace RemoteCheckup.SubServices
                 {
                     case "MemTotal": {
                         ulong.TryParse(match.Groups[2].Value, out ulong kilobytes);
-                        memoryInfo.TotalBytes = kilobytes * 1000;
+                        memoryInfo.TotalPhys = kilobytes * 1000;
                         break;
                     }
                     case "MemAvailable": {
                         ulong.TryParse(match.Groups[2].Value, out ulong kilobytes);
-                        memoryInfo.UsedBytes = memoryInfo.TotalBytes - kilobytes * 1000;
+                        memoryInfo.UsedPhys = memoryInfo.TotalPhys - kilobytes * 1000;
                         break;
                     }
                     case "MemFree": {
                         ulong.TryParse(match.Groups[2].Value, out ulong kilobytes);
-                        memoryInfo.CommittedBytes = memoryInfo.TotalBytes - kilobytes * 1000;
+                        memoryInfo.CommittedPhys = memoryInfo.TotalPhys - kilobytes * 1000;
+                        break;
+                    }
+                    case "SwapTotal": {
+                        ulong.TryParse(match.Groups[2].Value, out ulong kilobytes);
+                        memoryInfo.TotalSwap = kilobytes * 1000;
+                        break;
+                    }
+                    case "SwapFree": {
+                        ulong.TryParse(match.Groups[2].Value, out ulong kilobytes);
+                        memoryInfo.UsedSwap = memoryInfo.TotalSwap - kilobytes * 1000;
                         break;
                     }
                 }
