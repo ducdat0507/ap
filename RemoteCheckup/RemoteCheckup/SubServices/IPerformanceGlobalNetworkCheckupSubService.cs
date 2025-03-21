@@ -27,7 +27,7 @@ namespace RemoteCheckup.SubServices
                 long dwlDelta = lastBytesReceived.TryGetValue(ni.Name, out long dwlLast)
                     ? (dwl - dwlLast) : 0;
 
-                Console.WriteLine(uplDelta, dwlDelta);
+                Console.WriteLine(uplDelta + " " + dwlDelta);
                 lastBytesSent[ni.Name] = upl;
                 lastBytesReceived[ni.Name] = dwl;
 
