@@ -7,11 +7,15 @@ using System.Text.RegularExpressions;
 namespace RemoteCheckup.SubServices
 {
     [SupportedOSPlatform("linux")]
-    public partial class PerformanceCheckupOnLinuxSubService : PerformanceCheckupSubService
+    public partial class PerformanceCheckupOnLinuxSubService : PerformanceCheckupSubService, IPerformanceGlobalNetworkCheckupSubService
     {
         private float ClockSpeed = 0;
         private Dictionary<string, ulong> lastCpuTime = new();
         private long lastCpuTimestamp = 0;
+
+        Dictionary<string, long> IPerformanceGlobalNetworkCheckupSubService.lastBytesSent { get; set; } = new();
+        Dictionary<string, long> IPerformanceGlobalNetworkCheckupSubService.lastBytesReceived { get; set; } = new();
+        long IPerformanceGlobalNetworkCheckupSubService.lastNetworkTimestamp { get; set; } = 0;
 
         public PerformanceCheckupOnLinuxSubService()
         {
@@ -98,6 +102,16 @@ namespace RemoteCheckup.SubServices
                     }
                 }
             }
+        }
+
+        public override void GetDriveInfo(PerformanceInfo info)
+        {
+            // TODO Implement this
+        }
+
+        public override void GetNetworkInfo(PerformanceInfo info)
+        {
+            ((IPerformanceGlobalNetworkCheckupSubService)this).GetNetworkInfoGlobal(info);
         }
 
         [GeneratedRegex(@"^(\w+):\s+(\d+) ?kB")]

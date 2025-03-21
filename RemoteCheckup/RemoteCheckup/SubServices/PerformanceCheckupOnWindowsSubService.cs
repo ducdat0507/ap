@@ -2,17 +2,22 @@
 using RemoteCheckup.Models;
 using System.Diagnostics;
 using System.Management;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
 namespace RemoteCheckup.SubServices
 {
     [SupportedOSPlatform("windows")]
-    public class PerformanceCheckupOnWindowsSubService : PerformanceCheckupSubService
+    public class PerformanceCheckupOnWindowsSubService : PerformanceCheckupSubService, IPerformanceGlobalNetworkCheckupSubService
     {
         private ManagementObjectSearcher cpuSearcher;
 
         private Dictionary<string, ulong> lastCpuTime = new();
         private Dictionary<string, ulong> lastCpuTimestamp = new();
+
+        Dictionary<string, long> IPerformanceGlobalNetworkCheckupSubService.lastBytesSent { get; set; } = new();
+        Dictionary<string, long> IPerformanceGlobalNetworkCheckupSubService.lastBytesReceived { get; set; } = new();
+        long IPerformanceGlobalNetworkCheckupSubService.lastNetworkTimestamp { get; set; } = 0;
 
         public PerformanceCheckupOnWindowsSubService()
         {
@@ -52,12 +57,53 @@ namespace RemoteCheckup.SubServices
                         return actualTime;
                     }).ToList(),
             });
-            info.Processors[^1].TotalUsage = totalUsage / info.Processors[^1].Usage.Count();
+            info.Processors[^1].TotalUsage = totalUsage / info.Processors[^1].Usage.Count;
         }
 
-        public override void GetMemoryInfo(PerformanceInfo info) 
+        public override void GetMemoryInfo(PerformanceInfo info)
+        {
+            MEMORYSTATUSEX memStatus = new();
+            GlobalMemoryStatusEx(memStatus);
+            info.Memory = new() {
+                TotalPhys = memStatus.ullTotalPhys,
+                UsedPhys = memStatus.ullTotalPhys - memStatus.ullAvailPhys,
+            };
+            info.Memory.TotalSwap = memStatus.ullTotalPageFile - info.Memory.TotalPhys;
+            info.Memory.UsedSwap = memStatus.ullTotalPageFile - memStatus.ullAvailPageFile - info.Memory.UsedPhys;
+        }
+
+        public override void GetDriveInfo(PerformanceInfo info)
         {
             // TODO Implement this
         }
+
+        public override void GetNetworkInfo(PerformanceInfo info)
+        {
+            ((IPerformanceGlobalNetworkCheckupSubService)this).GetNetworkInfoGlobal(info);
+        }
+
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+        private class MEMORYSTATUSEX
+        {
+            public uint dwLength;
+            public uint dwMemoryLoad;
+            public ulong ullTotalPhys;
+            public ulong ullAvailPhys;
+            public ulong ullTotalPageFile;
+            public ulong ullAvailPageFile;
+            public ulong ullTotalVirtual;
+            public ulong ullAvailVirtual;
+            public ulong ullAvailExtendedVirtual;
+
+            public MEMORYSTATUSEX()
+            {
+                this.dwLength = (uint)Marshal.SizeOf(typeof(MEMORYSTATUSEX));
+            }
+        }
+
+        [return: MarshalAs(UnmanagedType.Bool)]
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern bool GlobalMemoryStatusEx([In] [Out] MEMORYSTATUSEX lpBuffer);
     }
 }

@@ -12,6 +12,9 @@
 
     let memGraphValues: number[] | undefined = undefined;
     let swapGraphValues: number[] | undefined = undefined;
+    
+    let netGraphUpValues: number[][] = [];
+    let netGraphDownValues: number[][] = [];
 
     onMount(async () => {
         let connection = new HubConnectionBuilder()
@@ -59,6 +62,19 @@
             swapGraphValues.push(info.memory.usedSwap / info.memory.totalSwap);
             swapGraphValues.shift();
             swapGraphValues = swapGraphValues;
+            
+            for (let a = 0; a < info.networks.length; a++) {
+                if (netGraphUpValues[a] == undefined) {
+                    netGraphUpValues[a] = new Array(50).fill(0);
+                }
+                if (netGraphDownValues[a] == undefined) {
+                    netGraphDownValues[a] = new Array(50).fill(0);
+                }
+                netGraphUpValues.push(info.networks[a].uploadSpeed);
+                netGraphUpValues.shift();
+                netGraphDownValues.push(info.networks[a].downloadSpeed);
+                netGraphDownValues.shift();
+            }
         });
         await connection.start();
     })
@@ -107,6 +123,24 @@
                 </button>
             {/if}
         {/if}
+        
+        {#if info?.networks?.length}
+            <hr/>
+        {/if}
+        {#each info?.networks as net, i}
+            <button class="perf-item mem">
+                <GraphBox values={netGraphUpValues[i]} />
+                <div class="info">
+                    <h2><b>NET</b></h2>
+                    <p>
+                        UP {(net.uploadSpeed).toFixed(0)}
+                    </p>
+                    <p>
+                        DOWN {(net.downloadSpeed).toFixed(0)}
+                    </p>
+                </div>
+            </button>
+        {/each}
     </aside>
     <main>
         {#each cpuGraphValues as cpu, i}
@@ -133,6 +167,9 @@
         width: 300px;
         flex: 0 0 300px;
         padding: 5px;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
     }
     .perf-container main {
         padding: 10px;
@@ -149,10 +186,19 @@
         flex-direction: row;
         font-size: small;
         gap: 5px;
-        background: none;
+        background: transparent;
         border: none;
         padding: 5px;
         text-align: left;
+        transition: background 0.1s, box-shadow 0.1s;
+    }
+    .perf-item:hover {
+        box-shadow: inset 0 0 0 1px var(--graph-border);
+    }
+    .perf-item:active {
+        box-shadow: inset 0 0 0 1px var(--graph-border);
+        background: var(--graph-fill);
+        transition: none;
     }
     .perf-item h2, p {
         font-size: 1em;

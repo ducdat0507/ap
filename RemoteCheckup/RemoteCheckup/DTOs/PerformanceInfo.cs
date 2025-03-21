@@ -8,11 +8,13 @@ namespace RemoteCheckup.Models
         public List<CPUInfo> Processors { get; set; } = new();
         public MemoryInfo Memory { get; set; } = new();
         public List<DriveInfo> Drives { get; set; } = new();
+        public List<NetworkInfo> Networks { get; set; } = new();
     }
 
     [Serializable]
     public class CPUInfo
     {
+        public string Name { get; set; } = "";
         public float TotalUsage { get; set; } = 0;
         public List<float> Usage { get; set; } = new();
     }
@@ -30,6 +32,7 @@ namespace RemoteCheckup.Models
     [Serializable]
     public class DriveInfo
     {
+        public string Name { get; set; } = "";
         public ulong ReadSpeed { get; set; } = 0;
         public ulong WriteSpeed { get; set; } = 0;
         public List<PartitionInfo> Partitions { get; set; } = new();
@@ -40,6 +43,15 @@ namespace RemoteCheckup.Models
     {
         public ulong TotalBytes { get; set; } = 0;
         public ulong UsedBytes { get; set; } = 0;
+    }
+
+    [Serializable]
+    public class NetworkInfo
+    {
+        public string Name { get; set; } = "";
+        public int Type { get; set; } = 0;
+        public ulong UploadSpeed { get; set; } = 0;
+        public ulong DownloadSpeed { get; set; } = 0;
     }
 
 }
