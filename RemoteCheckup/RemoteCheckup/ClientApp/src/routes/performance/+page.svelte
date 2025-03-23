@@ -1,23 +1,34 @@
+<svelte:head>
+    <title>Performance</title>
+</svelte:head>
+
 <script lang="ts">
-    import { HttpTransportType, HubConnectionBuilder } from "@microsoft/signalr";
-    import { onMount } from "svelte";
+    import { HttpTransportType, HubConnection, HubConnectionBuilder } from "@microsoft/signalr";
+    import { getContext, onDestroy, onMount, type Snippet } from "svelte";
     import GraphBox from "../../components/GraphBox.svelte";
     import type { PerformanceInfo } from "../../types/PerformanceInfo";
     import GraphBoxList from "../../components/GraphBoxList.svelte";
+    import { getNetType, formatPrefix } from "../../utils/utils"
+    import Icon from "@iconify/svelte";
+    import NetworkGraphBox from "../../components/NetworkGraphBox.svelte";
+  import CapacityGraphBox from "../../components/CapacityGraphBox.svelte";
     
-    let info: PerformanceInfo | null = null;
+    let info: PerformanceInfo = $state({}) as PerformanceInfo;
+    let connection: HubConnection | null = $state(null);
 
-    let cpuGraphTotalValues: number[][] = [];
-    let cpuGraphValues: number[][][] = [];
-
-    let memGraphValues: number[] | undefined = undefined;
-    let swapGraphValues: number[] | undefined = undefined;
-    
-    let netGraphUpValues: number[][] = [];
-    let netGraphDownValues: number[][] = [];
+    let graphValues = $state({
+        cpuTotal: [] as number[][],
+        cpuCore: [] as number[][][],
+        mem: undefined as number[] | undefined,
+        swap: undefined as number[] | undefined,
+        driveRead: [] as number[][],
+        driveWrite: [] as number[][],
+        netUp: [] as number[][],
+        netDown: [] as number[][],
+    })
 
     onMount(async () => {
-        let connection = new HubConnectionBuilder()
+        connection = new HubConnectionBuilder()
             .withUrl("/api/hubs/performance", {
                 skipNegotiation: true,
                 transport: HttpTransportType.WebSockets
@@ -25,77 +36,99 @@
             .build();
         connection.on("update", (inf : PerformanceInfo) => {
             info = inf;
+            console.log(inf);
 
             for (let a = 0; a < info.processors.length; a++) {
 
-                if (cpuGraphTotalValues[a] == undefined) {
-                    cpuGraphTotalValues[a] = new Array(50).fill(0);
+                if (graphValues.cpuTotal[a] == undefined) {
+                    graphValues.cpuTotal[a] = new Array(50).fill(0);
                 }
-                cpuGraphTotalValues[a].push(info.processors[a].totalUsage);
-                cpuGraphTotalValues[a].shift();
+                graphValues.cpuTotal[a].push(info.processors[a].totalUsage);
+                graphValues.cpuTotal[a].shift();
 
-                if (cpuGraphValues[a] == undefined) {
-                    cpuGraphValues[a] = new Array();
+                if (graphValues.cpuCore[a] == undefined) {
+                    graphValues.cpuCore[a] = new Array();
                 }
                 for (let b = 0; b < info.processors[a].usage.length; b++) {
-                    if (cpuGraphValues[a][b] == undefined) {
-                        cpuGraphValues[a][b] = new Array(50).fill(0);
+                    if (graphValues.cpuCore[a][b] == undefined) {
+                        graphValues.cpuCore[a][b] = new Array(50).fill(0);
                     }
-                    cpuGraphValues[a][b].push(info.processors[a].usage[b]);
-                    cpuGraphValues[a][b].shift();
+                    graphValues.cpuCore[a][b].push(info.processors[a].usage[b]);
+                    graphValues.cpuCore[a][b].shift();
                 }
             }
-            cpuGraphValues = cpuGraphValues;
-            cpuGraphTotalValues = cpuGraphTotalValues;
 
-
-            if (memGraphValues == undefined) {
-                memGraphValues= new Array(50).fill(0);
+            if (graphValues.mem == undefined) {
+                graphValues.mem = new Array(50).fill(0);
             }
-            memGraphValues.push(info.memory.usedPhys / info.memory.totalPhys);
-            memGraphValues.shift();
-            memGraphValues = memGraphValues;
+            graphValues.mem.push(info.memory.usedPhys / info.memory.totalPhys);
+            graphValues.mem.shift();
 
-            if (swapGraphValues == undefined) {
-                swapGraphValues = new Array(50).fill(0);
+            if (graphValues.swap == undefined) {
+                graphValues.swap = new Array(50).fill(0);
             }
-            swapGraphValues.push(info.memory.usedSwap / info.memory.totalSwap);
-            swapGraphValues.shift();
-            swapGraphValues = swapGraphValues;
+            graphValues.swap.push(info.memory.usedSwap / info.memory.totalSwap);
+            graphValues.swap.shift();
+            
+            for (let a = 0; a < info.drives.length; a++) {
+                if (graphValues.driveRead[a] == undefined) {
+                    graphValues.driveRead[a] = new Array(50).fill(0);
+                }
+                if (graphValues.driveWrite[a] == undefined) {
+                    graphValues.driveWrite[a] = new Array(50).fill(0);
+                }
+                graphValues.driveRead[a].push(info.drives[a].readSpeed);
+                graphValues.driveRead[a].shift();
+                graphValues.driveWrite[a].push(info.drives[a].writeSpeed);
+                graphValues.driveWrite[a].shift();
+            }
             
             for (let a = 0; a < info.networks.length; a++) {
-                if (netGraphUpValues[a] == undefined) {
-                    netGraphUpValues[a] = new Array(50).fill(0);
+                if (graphValues.netUp[a] == undefined) {
+                    graphValues.netUp[a] = new Array(50).fill(0);
                 }
-                if (netGraphDownValues[a] == undefined) {
-                    netGraphDownValues[a] = new Array(50).fill(0);
+                if (graphValues.netDown[a] == undefined) {
+                    graphValues.netDown[a] = new Array(50).fill(0);
                 }
-                netGraphUpValues.push(info.networks[a].uploadSpeed);
-                netGraphUpValues.shift();
-                netGraphDownValues.push(info.networks[a].downloadSpeed);
-                netGraphDownValues.shift();
+                graphValues.netUp[a].push(info.networks[a].uploadSpeed);
+                graphValues.netUp[a].shift();
+                graphValues.netDown[a].push(info.networks[a].downloadSpeed);
+                graphValues.netDown[a].shift();
             }
+
+            graphValues = graphValues;
         });
         await connection.start();
     })
+
+    onDestroy(async () => {
+        await connection?.stop();
+    })
+
+    let slots = getContext("layout-slots") as {
+        subnav?: Snippet
+    };
+    Object.assign(slots, { subnav });
 </script>
 
-<div class="perf-container">
-    <aside>
-        {#each cpuGraphTotalValues as cpu, i}
-            <button class="perf-item cpu">
+{#snippet subnav()}
+    {#each graphValues.cpuTotal as cpu, i}
+        <button class="item perf-item cpu">
+            <div class="section">
                 <GraphBox values={cpu} />
                 <div class="info">
-                    <h2><b>CPU {i}</b></h2>
+                    <h2><b>CPU</b></h2>
                     <p>{(info.processors[i].totalUsage * 100).toFixed(1)}%</p>
                 </div>
-            </button>
-        {/each}
+            </div>
+        </button>
+    {/each}
 
-        {#if info?.memory}
-            <hr/>
-            <button class="perf-item mem">
-                <GraphBox values={memGraphValues} />
+    {#if info?.memory}
+        <hr/>
+        <button class="item perf-item mem">
+            <div class="section">
+                <GraphBox values={graphValues.mem} />
                 <div class="info">
                     <h2><b>MEMORY</b></h2>
                     <p>
@@ -106,10 +139,10 @@
                         {(info?.memory.totalPhys / 2 ** 30 || 0).toFixed(2)} GiB
                     </p>
                 </div>
-            </button>
+            </div>
             {#if info.memory.totalSwap > 0}
-                <button class="perf-item mem">
-                    <GraphBox values={swapGraphValues} />
+                <div class="section">
+                    <GraphBox values={graphValues.swap} />
                     <div class="info">
                         <h2><b>SWAP</b></h2>
                         <p>
@@ -120,96 +153,78 @@
                             {(info?.memory.totalSwap / 2 ** 30 || 0).toFixed(2)} GiB
                         </p>
                     </div>
-                </button>
+                </div>
             {/if}
-        {/if}
-        
-        {#if info?.networks?.length}
-            <hr/>
-        {/if}
-        {#each info?.networks as net, i}
-            <button class="perf-item mem">
-                <GraphBox values={netGraphUpValues[i]} />
+        </button>
+    {/if}
+
+    {#if info?.drives?.length}
+        <hr/>
+    {/if}
+    {#each info?.drives as drv, i}
+        <button class="item perf-item drv">
+            <div class="section">
+                <NetworkGraphBox upValues={graphValues.driveRead[i]} downValues={graphValues.driveWrite[i]} />
                 <div class="info">
-                    <h2><b>NET</b></h2>
+                    <h2><b>{drv.isHDD ? "HDD" : "SSD"}</b> {drv.name}</h2>
                     <p>
-                        UP {(net.uploadSpeed).toFixed(0)}
+                        <Icon icon="fluent:arrow-up-12-regular" inline />
+                        {formatPrefix(drv.readSpeed, true)}B/s
                     </p>
                     <p>
-                        DOWN {(net.downloadSpeed).toFixed(0)}
+                        <Icon icon="fluent:arrow-down-12-regular" inline />
+                        {formatPrefix(drv.writeSpeed, true)}B/s
                     </p>
                 </div>
-            </button>
-        {/each}
-    </aside>
-    <main>
-        {#each cpuGraphValues as cpu, i}
-            <article class="perf-object cpu">
-                <h2><b>CPU {i}</b></h2>
-                <GraphBoxList>
-                    {#each cpu as core, j}
-                        <GraphBox values={core} width={60} height={30} />
-                    {/each}
-                </GraphBoxList>
-            </article>
-        {/each}
-    </main>
-</div>
+            </div>
+            {#each drv.partitions as part, j}
+                <div class="section">
+                    <CapacityGraphBox value={part.usedBytes / part.totalBytes} />
+                    <div class="info">
+                        <h2><b>{part.name}</b></h2>
+                        {formatPrefix(part.usedBytes || 0, true)}B / 
+                        {formatPrefix(part.totalBytes || 0, true)}B 
+                    </div>
+                </div>
+            {/each}
+        </button>
+    {/each}
+
+    {#if info?.networks?.length}
+        <hr/>
+    {/if}
+    {#each info?.networks as net, i}
+        <button class="item perf-item net">
+            <div class="section">
+                <NetworkGraphBox upValues={graphValues.netUp[i]} downValues={graphValues.netDown[i]} />
+                <div class="info">
+                    <h2><b>{getNetType(net.type).toUpperCase()}</b> {net.name}</h2>
+                    <p>
+                        <Icon icon="fluent:arrow-up-12-regular" inline />
+                        {formatPrefix(net.uploadSpeed * 8)}bps
+                    </p>
+                    <p>
+                        <Icon icon="fluent:arrow-down-12-regular" inline />
+                        {formatPrefix(net.downloadSpeed * 8)}bps
+                    </p>
+                </div>
+            </div>
+        </button>
+    {/each}
+{/snippet}
+
+{#each graphValues.cpuCore as cpu, i}
+    <article class="perf-object cpu">
+        <h2><b>CPU {i}</b></h2>
+        <GraphBoxList>
+            {#each cpu as core, j}
+                <GraphBox values={core} width={60} height={30} />
+            {/each}
+        </GraphBoxList>
+    </article>
+{/each}
 
 <style>
-    .perf-container {
-        display: flex;
-        flex-direction: row;
-        position: fixed;
-        inset: 0;
-    }
-    .perf-container aside {
-        width: 300px;
-        flex: 0 0 300px;
-        padding: 5px;
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-    }
-    .perf-container main {
-        padding: 10px;
-        flex: 1;
-    }
-    .perf-container aside hr {
-        border: none;
-        border-bottom: 1px solid #7777;
-        margin: 5px;
-    }
-
-    .perf-item {
-        display: flex;
-        flex-direction: row;
-        font-size: small;
-        gap: 5px;
-        background: transparent;
-        border: none;
-        padding: 5px;
-        text-align: left;
-        transition: background 0.1s, box-shadow 0.1s;
-    }
-    .perf-item:hover {
-        box-shadow: inset 0 0 0 1px var(--graph-border);
-    }
-    .perf-item:active {
-        box-shadow: inset 0 0 0 1px var(--graph-border);
-        background: var(--graph-fill);
-        transition: none;
-    }
-    .perf-item h2, p {
-        font-size: 1em;
-        margin: 0;
-    }
-    .perf-item :global(.graph-box) {
-        width: 100px;
-        --graph-line: var(--accent-color);
-        --graph-border: unset;
-        --graph-fill: unset;
-    }
 
     .perf-object {
         border: 1px solid var(--accent-color);
@@ -226,13 +241,23 @@
     }
 
     .perf-object.cpu, .perf-item.cpu {
-        --accent-color: #592;
-        --graph-border: #5927;
-        --graph-fill: #5923;
+        --accent-color: #9fa;
+        --graph-border: #9fa7;
+        --graph-fill: #9fa3;
     }
     .perf-object.mem, .perf-item.mem {
-        --accent-color: #27c;
-        --graph-border: #27c7;
-        --graph-fill: #27c3;
+        --accent-color: #7cf;
+        --graph-border: #7cf7;
+        --graph-fill: #7cf3;
+    }
+    .perf-object.drv, .perf-item.drv {
+        --accent-color: #ee9;
+        --graph-border: #ee97;
+        --graph-fill: #ee93;
+    }
+    .perf-object.net, .perf-item.net {
+        --accent-color: #e7f;
+        --graph-border: #e7f7;
+        --graph-fill: #e7f3;
     }
 </style>

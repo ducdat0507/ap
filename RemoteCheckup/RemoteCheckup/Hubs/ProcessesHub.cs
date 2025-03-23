@@ -3,15 +3,16 @@ using RemoteCheckup.DTOs;
 
 namespace RemoteCheckup.Hubs
 {
-    public class PerformanceCheckupHub : Hub
+    public class ProcessesCheckupHub : Hub
     {
-        private readonly ILogger<PerformanceCheckupHub> _logger;
-        public static PerformanceInfo? CurrentInfo { get; set; }
+        private readonly ILogger<ProcessesCheckupHub> _logger;
+        public static ProcessesInfo? CurrentInfo { get; set; }
 
-        public PerformanceCheckupHub(ILogger<PerformanceCheckupHub> logger)
+        public ProcessesCheckupHub(ILogger<ProcessesCheckupHub> logger)
         {
             _logger = logger;
         }
+
 
         public async override Task OnConnectedAsync()
         {

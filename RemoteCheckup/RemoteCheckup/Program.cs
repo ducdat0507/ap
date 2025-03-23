@@ -15,6 +15,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddSignalR();
 
 builder.Services.AddHostedService<PeriodicPerformanceCheckupService>();
+builder.Services.AddHostedService<PeriodicProcessCheckupService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -29,6 +30,7 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.MapHub<PerformanceCheckupHub>("/api/hubs/performance");
+app.MapHub<ProcessesCheckupHub>("/api/hubs/processes");
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller}/{action=Index}/{id?}");

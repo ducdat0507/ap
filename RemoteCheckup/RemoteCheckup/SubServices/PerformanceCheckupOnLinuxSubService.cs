@@ -1,34 +1,33 @@
 ﻿
-using RemoteCheckup.Models;
+using Microsoft.AspNetCore.Http.Features;
+using RemoteCheckup.DTOs;
+using RemoteCheckup.Utilities;
 using System.Diagnostics;
 using System.Runtime.Versioning;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
 namespace RemoteCheckup.SubServices
 {
     [SupportedOSPlatform("linux")]
-    public partial class PerformanceCheckupOnLinuxSubService : PerformanceCheckupSubService, IPerformanceGlobalNetworkCheckupSubService
+    public partial class PerformanceCheckupOnLinuxSubService : PerformanceCheckupSubService
     {
         private float ClockSpeed = 0;
         private Dictionary<string, ulong> lastCpuTime = new();
         private long lastCpuTimestamp = 0;
 
-        Dictionary<string, long> IPerformanceGlobalNetworkCheckupSubService.lastBytesSent { get; set; } = new();
-        Dictionary<string, long> IPerformanceGlobalNetworkCheckupSubService.lastBytesReceived { get; set; } = new();
-        long IPerformanceGlobalNetworkCheckupSubService.lastNetworkTimestamp { get; set; } = 0;
+        Dictionary<string, ulong> lastBytesRead { get; set; } = new();
+        Dictionary<string, ulong> lastBytesWritten { get; set; } = new();
+        long lastDriveTimestamp { get; set; } = 0;
 
         public PerformanceCheckupOnLinuxSubService()
         {
-            var psi = new ProcessStartInfo
-            {
-                FileName = "/bin/getconf",
-                Arguments = "CLK_TCK",
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using var process = Process.Start(psi);
+            
+            using var process = CliUtility.Run(
+                "/bin/getconf",
+                "CLK_TCK"
+            );
             process.WaitForExit();
             float.TryParse(process.StandardOutput.ReadToEnd(), out ClockSpeed);
         }
@@ -106,15 +105,105 @@ namespace RemoteCheckup.SubServices
 
         public override void GetDriveInfo(PerformanceInfo info)
         {
-            // TODO Implement this
-        }
+            using Process p = CliUtility.Run(
+                "/bin/lsblk",
+                @"-b -o name,label,type,rota,model,log-sec,fssize,fsused,mountpoints --json"
+            );
+            var lsblkOutput = JsonSerializer.DeserializeAsync<LsblkOutput>(p.StandardOutput.BaseStream);
+            
+            Dictionary<string, ulong> sectorsRead = [];
+            Dictionary<string, ulong> sectorsWritten = [];
+            foreach (string line in File.ReadAllLines("/proc/diskstats"))
+            {
+                string[] items = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                sectorsRead[items[2]] = Convert.ToUInt64(items[5]);
+                sectorsWritten[items[2]] = Convert.ToUInt64(items[9]);
+            }
+ 
+            p.WaitForExit();
+            try { lsblkOutput.AsTask().Wait(); }
+            catch (Exception e) { Console.WriteLine(e); return; }
 
-        public override void GetNetworkInfo(PerformanceInfo info)
-        {
-            ((IPerformanceGlobalNetworkCheckupSubService)this).GetNetworkInfoGlobal(info);
+            long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            long duration = timestamp - lastDriveTimestamp;
+            lastDriveTimestamp = timestamp;
+
+            if (lsblkOutput.IsCompletedSuccessfully) 
+            {
+                LsblkOutput lsblkResult = lsblkOutput.Result!;
+                foreach (var block in lsblkResult.BlockDevices) 
+                {
+                    if (block.MountPoints?.Contains("[SWAP]") != false) continue;
+                    if (block.BlockType != "disk") continue;
+
+                    ulong rd = sectorsRead.GetValueOrDefault(block.Name);
+                    ulong wr = sectorsWritten.GetValueOrDefault(block.Name);
+                    ulong rdDelta = lastBytesRead.TryGetValue(block.Name, out ulong rdLast)
+                        ? (rd - rdLast) : 0;
+                    ulong wrDelta = lastBytesWritten.TryGetValue(block.Name, out ulong wrLast)
+                        ? (wr - wrLast) : 0;
+
+                    lastBytesRead[block.Name] = rd;
+                    lastBytesWritten[block.Name] = wr;
+
+                    DTOs.DriveInfo driveInfo = new () {
+                        Name = block.DriveModel,
+                        IsHDD = block.IsHDD,
+                        ReadSpeed = (ulong)((double)rdDelta * block.SectorSize / duration * 1000),
+                        WriteSpeed = (ulong)((double)wrDelta * block.SectorSize / duration * 1000),
+                    };
+                    info.Drives.Add(driveInfo);
+
+                    foreach (var part in block.Children) 
+                    {
+                        if (part.MountPoints?.Count <= 0 || part.MountPoints?.Any(x => x == "[SWAP]" || x == null) != false) continue;
+                        if (part.BlockType != "part") continue;
+                        if ((Convert.ToUInt64(part.PartitionFlags) & 0x8000_0000_0000_0000) != 0) continue;
+                        driveInfo.Partitions.Add(new PartitionInfo() {
+                            Name = part.Name,
+                            TotalBytes = Convert.ToUInt64(part.FileSystemSize),
+                            UsedBytes = Convert.ToUInt64(part.FileSystemUsed),
+                        });
+                    }
+                }
+            }
         }
 
         [GeneratedRegex(@"^(\w+):\s+(\d+) ?kB")]
         private static partial Regex MeminfoParseRegex();
+
+        [Serializable]
+        class LsblkOutput
+        {
+            [JsonPropertyName("blockdevices")]
+            public List<LsblkBlock> BlockDevices { get; set; } = new();
+        }
+
+        [Serializable]
+        class LsblkBlock
+        {
+            [JsonPropertyName("name")]
+            public string Name { get; set; } = "";
+            [JsonPropertyName("label")]
+            public string Label { get; set; } = "";
+            [JsonPropertyName("partflags")]
+            public string PartitionFlags { get; set; } = "0";
+            [JsonPropertyName("rota")]
+            public bool IsHDD { get; set; } = false;
+            [JsonPropertyName("model")]
+            public string DriveModel { get; set; } = "";
+            [JsonPropertyName("fssize")]
+            public string FileSystemSize { get; set; } = "";
+            [JsonPropertyName("fsused")]
+            public string FileSystemUsed { get; set; } = "";
+            [JsonPropertyName("type")]
+            public string BlockType { get; set; } = "";
+            [JsonPropertyName("log-sec")]
+            public ulong SectorSize { get; set; } = 0;
+            [JsonPropertyName("mountpoints")]
+            public List<string> MountPoints { get; set; } = [];
+            [JsonPropertyName("children")]
+            public List<LsblkBlock> Children { get; set; } = [];
+        }
     }
 }

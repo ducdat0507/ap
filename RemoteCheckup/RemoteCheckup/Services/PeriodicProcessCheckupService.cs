@@ -8,27 +8,27 @@ using RemoteCheckup.SubServices;
 
 namespace RemoteCheckup.Services
 {
-    public class PeriodicPerformanceCheckupService : BackgroundService
+    public class PeriodicProcessCheckupService : BackgroundService
     {
-        private readonly IHubContext<PerformanceCheckupHub> _hubContext;
-        private readonly ILogger<PeriodicPerformanceCheckupService> _logger;
+        private readonly IHubContext<ProcessesCheckupHub> _hubContext;
+        private readonly ILogger<PeriodicProcessCheckupService> _logger;
 
-        private PerformanceCheckupSubService? subService;
+        private ProcessCheckupSubService subService;
 
-        public PeriodicPerformanceCheckupService(IHubContext<PerformanceCheckupHub> hubContext, ILogger<PeriodicPerformanceCheckupService> logger)
+        public PeriodicProcessCheckupService(IHubContext<ProcessesCheckupHub> hubContext, ILogger<PeriodicProcessCheckupService> logger)
         {
             _hubContext = hubContext;
             _logger = logger;
 
-            if (OperatingSystem.IsWindows()) subService = new PerformanceCheckupOnWindowsSubService();
-            else if (OperatingSystem.IsLinux()) subService = new PerformanceCheckupOnLinuxSubService();
+            // if (OperatingSystem.IsWindows()) subService = new PerformanceCheckupOnWindowsSubService();
+            /*else*/ if (OperatingSystem.IsLinux()) subService = new ProcessCheckupOnLinuxSubService();
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation("Periodic performance checkup service started");
 
-            using PeriodicTimer timer = new(TimeSpan.FromSeconds(1));
+            using PeriodicTimer timer = new(TimeSpan.FromSeconds(3));
 
             try
             {
@@ -39,26 +39,26 @@ namespace RemoteCheckup.Services
             }
             catch (OperationCanceledException)
             {
-                _logger.LogError("Periodic performance checkup service stopped");
+                _logger.LogWarning("Periodic performance checkup service stopped");
             }
         }
 
         protected async Task DoCheckup()
         {
-            try 
+            try
             {
-                PerformanceInfo? info = subService?.GetPerformanceInfo();
+                ProcessesInfo? info = subService?.GetProcessesInfo();
                 await SetCurrentInfo(info);
             }
             catch (Exception e)
             {
-                _logger.LogTrace(e, "Process checkup failed");
+                _logger.LogError(e, "Process checkup failed");
             }
         }
 
-        protected async Task SetCurrentInfo(PerformanceInfo? info)
+        protected async Task SetCurrentInfo(ProcessesInfo? info)
         {
-            PerformanceCheckupHub.CurrentInfo = info;
+            ProcessesCheckupHub.CurrentInfo = info;
             await _hubContext.Clients.All.SendAsync("update", info);
         }
     }

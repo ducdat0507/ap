@@ -1,5 +1,5 @@
 ﻿
-using RemoteCheckup.Models;
+using RemoteCheckup.DTOs;
 using System.Diagnostics;
 using System.Management;
 using System.Runtime.InteropServices;
@@ -8,16 +8,12 @@ using System.Runtime.Versioning;
 namespace RemoteCheckup.SubServices
 {
     [SupportedOSPlatform("windows")]
-    public class PerformanceCheckupOnWindowsSubService : PerformanceCheckupSubService, IPerformanceGlobalNetworkCheckupSubService
+    public class PerformanceCheckupOnWindowsSubService : PerformanceCheckupSubService
     {
         private ManagementObjectSearcher cpuSearcher;
 
         private Dictionary<string, ulong> lastCpuTime = new();
         private Dictionary<string, ulong> lastCpuTimestamp = new();
-
-        Dictionary<string, long> IPerformanceGlobalNetworkCheckupSubService.lastBytesSent { get; set; } = new();
-        Dictionary<string, long> IPerformanceGlobalNetworkCheckupSubService.lastBytesReceived { get; set; } = new();
-        long IPerformanceGlobalNetworkCheckupSubService.lastNetworkTimestamp { get; set; } = 0;
 
         public PerformanceCheckupOnWindowsSubService()
         {
@@ -75,11 +71,6 @@ namespace RemoteCheckup.SubServices
         public override void GetDriveInfo(PerformanceInfo info)
         {
             // TODO Implement this
-        }
-
-        public override void GetNetworkInfo(PerformanceInfo info)
-        {
-            ((IPerformanceGlobalNetworkCheckupSubService)this).GetNetworkInfoGlobal(info);
         }
 
 

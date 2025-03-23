@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using System.Net.NetworkInformation;
+using Microsoft.AspNetCore.SignalR;
 
-namespace RemoteCheckup.Models
+namespace RemoteCheckup.DTOs
 {
     [Serializable]
     public class PerformanceInfo
@@ -33,6 +34,7 @@ namespace RemoteCheckup.Models
     public class DriveInfo
     {
         public string Name { get; set; } = "";
+        public bool? IsHDD { get; set; } = null;
         public ulong ReadSpeed { get; set; } = 0;
         public ulong WriteSpeed { get; set; } = 0;
         public List<PartitionInfo> Partitions { get; set; } = new();
@@ -41,6 +43,7 @@ namespace RemoteCheckup.Models
     [Serializable]
     public class PartitionInfo
     {
+        public string Name { get; set; } = "";
         public ulong TotalBytes { get; set; } = 0;
         public ulong UsedBytes { get; set; } = 0;
     }
@@ -49,7 +52,7 @@ namespace RemoteCheckup.Models
     public class NetworkInfo
     {
         public string Name { get; set; } = "";
-        public int Type { get; set; } = 0;
+        public NetworkInterfaceType Type { get; set; } = 0;
         public ulong UploadSpeed { get; set; } = 0;
         public ulong DownloadSpeed { get; set; } = 0;
     }

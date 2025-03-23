@@ -1,5 +1,13 @@
+<script lang="ts">
+  import { getContext, type Snippet } from "svelte";
 
-<h1>Welcome to SvelteKit</h1>
+    let slots = getContext("layout-slots") as {
+        subnav?: Snippet
+    };
+    Object.assign(slots, { subnav: null });
+</script>
+
+<h1>Welcome</h1>
 <p>
-
+    Insert dashboard here
 </p>
