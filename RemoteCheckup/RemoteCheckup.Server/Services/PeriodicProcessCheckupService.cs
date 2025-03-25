@@ -20,8 +20,13 @@ namespace RemoteCheckup.Services
             _hubContext = hubContext;
             _logger = logger;
 
+<<<<<<< Updated upstream:RemoteCheckup/RemoteCheckup.Server/Services/PeriodicProcessCheckupService.cs
             // if (OperatingSystem.IsWindows()) subService = new PerformanceCheckupOnWindowsSubService();
             /*else*/ if (OperatingSystem.IsLinux()) subService = new ProcessCheckupOnLinuxProbe();
+=======
+            if (OperatingSystem.IsWindows()) subService = new ProcessCheckupOnWindowsSubService();
+            if (OperatingSystem.IsLinux()) subService = new ProcessCheckupOnLinuxSubService();
+>>>>>>> Stashed changes:RemoteCheckup/RemoteCheckup/Services/PeriodicProcessCheckupService.cs
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)

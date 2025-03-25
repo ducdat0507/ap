@@ -25,22 +25,30 @@ namespace RemoteCheckup.Probes
 
         public void GetProcessesInfo(ProcessesInfo info)
         {
-            long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            long duration = timestamp - lastTimestamp;
-            lastTimestamp = timestamp;
-
-            foreach (var proc in Process.GetProcesses()) 
+            try
             {
-                double cpuSec = proc.UserProcessorTime.TotalSeconds;
-                double cpuDelta = lastCpuTime.TryGetValue(proc.Id, out double cpuLast)
-                    ? (cpuSec - cpuLast) : 0;
-                info.Processes.Add(new ProcessInfo {
-                    PID = proc.Id,
-                    Name = proc.ProcessName,
-                    CPUUsage = (float)cpuDelta / duration * 1000,
-                    MemoryUsage = (ulong)proc.PrivateMemorySize64,
-                });
-                lastCpuTime[proc.Id] = cpuSec;
+                long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                long duration = timestamp - lastTimestamp;
+                lastTimestamp = timestamp;
+
+                foreach (var proc in Process.GetProcesses())
+                {
+                    double cpuSec = proc.UserProcessorTime.TotalSeconds;
+                    double cpuDelta = lastCpuTime.TryGetValue(proc.Id, out double cpuLast)
+                        ? (cpuSec - cpuLast) : 0;
+                    info.Processes.Add(new ProcessInfo
+                    {
+                        PID = proc.Id,
+                        Name = proc.ProcessName,
+                        CPUUsage = (float)cpuDelta / duration * 1000,
+                        MemoryUsage = (ulong)proc.PrivateMemorySize64,
+                    });
+                    lastCpuTime[proc.Id] = cpuSec;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine(e);
             }
         }
     }

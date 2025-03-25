@@ -9,7 +9,7 @@
     <SpaRoot>..\RemoteCheckup.Client\</SpaRoot>
     <DefaultItemExcludes>$(DefaultItemExcludes);$(SpaRoot)node_modules\**</DefaultItemExcludes>
     <SpaProxyServerUrl>http://localhost:5173</SpaProxyServerUrl>
-    <SpaProxyLaunchCommand>npx vite dev</SpaProxyLaunchCommand>
+    <SpaProxyLaunchCommand>npx vite dev --host</SpaProxyLaunchCommand>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
