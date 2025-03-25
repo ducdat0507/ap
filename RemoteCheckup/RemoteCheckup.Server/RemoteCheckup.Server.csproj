@@ -14,8 +14,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.14" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.14" />
     <PackageReference Include="Microsoft.AspNetCore.SpaProxy" Version="6.0.5" />
     <PackageReference Include="MySql.Data" Version="9.2.0" />
+    <PackageReference Include="MySql.EntityFrameworkCore" Version="8.0.11" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="6.0.2" />
     <PackageReference Include="System.Management" Version="9.0.3" />
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="8.0.1" />
@@ -23,12 +26,8 @@
 
   <ItemGroup>
     <!-- Don't publish the SPA source files, but do show them in the project files list -->
-    <Compile Remove="NewFolder\**" />
     <Content Remove="$(SpaRoot)**" />
-    <Content Remove="NewFolder\**" />
-    <EmbeddedResource Remove="NewFolder\**" />
     <None Remove="$(SpaRoot)**" />
-    <None Remove="NewFolder\**" />
     <None Include="$(SpaRoot)**" Exclude="$(SpaRoot)node_modules\**" />
   </ItemGroup>
 

@@ -29,3 +29,4 @@ namespace RemoteCheckup.DTOs
         public string Name { get; set; } = "";
     }
 }
+

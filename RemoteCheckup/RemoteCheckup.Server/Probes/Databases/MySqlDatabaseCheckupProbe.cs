@@ -28,14 +28,21 @@ namespace RemoteCheckup.Probes
         {
             info.Type = "mysql";
 
+            info.Online = false;
             if (!EnsureConnection()) 
             {
                 Console.Error.WriteLine("MySQL connection failed");
-                info.Online = false;
+                return;
+            }
+            try
+            {
+                connection.Open();
+            }
+            catch
+            {
                 return;
             }
             info.Online = true;
-            connection.Open();
             
             var query = new MySqlCommand("SHOW DATABASES", connection);
             var reader = query.ExecuteReader();

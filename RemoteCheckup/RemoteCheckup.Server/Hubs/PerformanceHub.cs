@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 using RemoteCheckup.DTOs;
 
 namespace RemoteCheckup.Hubs
 {
+    [Authorize]
     public class PerformanceCheckupHub : Hub
     {
         private readonly ILogger<PerformanceCheckupHub> _logger;

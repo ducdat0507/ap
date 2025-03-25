@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 using RemoteCheckup.DTOs;
 
 namespace RemoteCheckup.Hubs
 {
+    [Authorize]
     public class DatabasesCheckupHub : Hub
     {
         private readonly ILogger<DatabasesCheckupHub> _logger;
