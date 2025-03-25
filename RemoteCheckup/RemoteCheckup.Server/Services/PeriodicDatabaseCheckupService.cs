@@ -22,7 +22,7 @@ namespace RemoteCheckup.Services
 
             // TODO allow configuration of this list
             probes = [
-                new MySqlDatabaseCheckupProbe("server=localhost;username=root;password=1234567;")
+                new MySqlDatabaseCheckupProbe("server=localhost;username=root;password=;")
             ];
         }
 

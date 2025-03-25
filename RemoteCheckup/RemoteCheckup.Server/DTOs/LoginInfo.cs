@@ -7,8 +7,10 @@ namespace RemoteCheckup.DTOs
     public class LoginInfo
     {
         [JsonPropertyName("username")]
-        public string Username { get; set; }
+        public string Username { get; set; } = "";
         [JsonPropertyName("password")]
-        public string Password { get; set; }
+        public string Password { get; set; } = "";
+        [JsonPropertyName("persist")]
+        public bool RememberMe { get; set; } = false;
     }
 }

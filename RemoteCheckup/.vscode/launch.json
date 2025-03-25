@@ -8,7 +8,8 @@
             "name": "C#: <project-name> Debug",
             "type": "dotnet",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/<relative-path-to-project-folder><project-name>.csproj"
+            "projectPath": "${workspaceFolder}/<relative-path-to-project-folder><project-name>.csproj",
+            "internalConsoleOptions": "neverOpen",
         },
     ]
 }

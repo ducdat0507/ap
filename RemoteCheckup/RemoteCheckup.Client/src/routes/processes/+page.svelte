@@ -24,7 +24,7 @@
         connection = new HubConnectionBuilder()
             .withUrl("/api/hubs/processes", {
                 skipNegotiation: true,
-                transport: HttpTransportType.WebSockets
+                transport: HttpTransportType.WebSockets,
             })
             .build();
         connection.on("update", (inf : ProcessesInfo) => {
