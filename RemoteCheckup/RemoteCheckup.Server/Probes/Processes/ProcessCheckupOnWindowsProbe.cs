@@ -5,10 +5,10 @@ using System.Text.RegularExpressions;
 using RemoteCheckup.DTOs;
 using RemoteCheckup.Utilities;
 
-namespace RemoteCheckup.SubServices
+namespace RemoteCheckup.Probes
 {
     [SupportedOSPlatform("windows")]
-    public partial class ProcessCheckupOnWindowsSubService : ProcessCheckupSubService
+    public partial class ProcessCheckupOnWindowsProbe : ProcessCheckupProbe
     {
         public override void GetServicesInfo(ProcessesInfo info)
         {
@@ -26,6 +26,10 @@ namespace RemoteCheckup.SubServices
                     }
                 });
             }
+        }
+        public override void GetActivePortsInfo(ProcessesInfo info)
+        {
+            // TODO Implement this
         }
     }
 }

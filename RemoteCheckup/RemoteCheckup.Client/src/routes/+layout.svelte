@@ -5,8 +5,6 @@
     import Icon from "@iconify/svelte";
     import { page } from '$app/state';
 
-    export const prerender = true;
-
     let { children } = $props();
 
     const slots: {
