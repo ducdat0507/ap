@@ -166,6 +166,7 @@
                         {@render columnHead("status", "STATUS")}
                         {@render columnHead("port", "PORT")}
                         {@render columnHead("pid", "PID")}
+                        {@render columnHead("pid", "PNAME")}
                         <th></th>
                     </tr>
                 </thead>
@@ -176,6 +177,7 @@
                             <td class="right">{getPortStatus(port.status)}</td>
                             <td class="right">{port.port}</td>
                             <td class="right">{port.pid ?? "---"}</td>
+                            <td>{info.processes.find(x => x.pid == port.pid)?.name ?? "---"}</td>
                             <td></td>
                         </tr>
                     {/each}

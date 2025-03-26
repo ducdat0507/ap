@@ -12,7 +12,7 @@
 
 <button disabled={!!busy} {...buttonProps}>
     {#if busy == actionName} 
-        <Icon icon="svg-spinners:ring-resize" inline />
+        <Icon icon="line-md:loading-loop" inline />
     {:else}
         {@render children()}
     {/if}

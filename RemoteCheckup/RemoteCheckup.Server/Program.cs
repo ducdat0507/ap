@@ -41,6 +41,16 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    var context = services.GetRequiredService<ApplicationDbContext>();    
+    context.Database.Migrate();
+
+    ApplicationDbInitializer.SeedDefaultUser(services);
+}
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -58,15 +68,5 @@ app.MapHub<ProcessesCheckupHub>("/api/hubs/processes");
 app.MapHub<DatabasesCheckupHub>("/api/hubs/databases"); 
 app.MapControllers();
 app.MapFallbackToFile("404.html");
-
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-
-    var context = services.GetRequiredService<ApplicationDbContext>();    
-    context.Database.Migrate();
-
-    ApplicationDbInitializer.SeedDefaultUser(services);
-}
 
 app.Run();

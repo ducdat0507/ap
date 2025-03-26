@@ -41,7 +41,7 @@ namespace RemoteCheckup.Controllers
 
         [HttpPost("login")]
         [AllowAnonymous]
-        public async Task<IActionResult> Login([FromBody] LoginInfo info)
+        public async Task<IActionResult> Login([FromBody] LoginData info)
         {
             var result = await _signInManager.PasswordSignInAsync(info.Username, info.Password, info.RememberMe, false);
 

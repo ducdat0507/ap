@@ -11,6 +11,7 @@ namespace RemoteCheckup.DTOs
     [Serializable]
     public class DatabaseServerInfo
     {
+        public string Name { get; set; } = "";
         public string Type { get; set; } = "";
         public List<DatabaseInfo> Databases { get; set; } = [];
         public bool Online { get; set; } = false;

@@ -8,11 +8,13 @@ namespace RemoteCheckup.Probes
 {
     public class MySqlDatabaseCheckupProbe : DatabaseCheckupProbe
     {
-        private MySqlConnection connection;
-        private string connectionString;
+        private readonly string name;
+        private MySqlConnection? connection;
+        private readonly string connectionString;
 
-        public MySqlDatabaseCheckupProbe(string connString) 
+        public MySqlDatabaseCheckupProbe(string name, string connString) 
         {
+            this.name = name;
             connectionString = connString;
             EnsureConnection();
         }
@@ -27,6 +29,7 @@ namespace RemoteCheckup.Probes
         public override void GetDatabaseInfo(DatabaseServerInfo info)
         {
             info.Type = "mysql";
+            info.Name = name;
 
             info.Online = false;
             if (!EnsureConnection()) 
@@ -36,7 +39,7 @@ namespace RemoteCheckup.Probes
             }
             try
             {
-                connection.Open();
+                connection!.Open();
             }
             catch
             {
@@ -56,6 +59,12 @@ namespace RemoteCheckup.Probes
             }
 
             connection.Close();
+        }
+
+        public override void Dispose()
+        {
+            connection?.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

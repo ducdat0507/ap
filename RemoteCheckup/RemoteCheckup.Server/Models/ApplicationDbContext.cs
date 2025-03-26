@@ -13,6 +13,8 @@ namespace RemoteCheckup.Models
             : base(options)
         {
         }
+
+        public DbSet<DatabaseTarget> DatabaseTargets { get; set; } = default!;
     }
 
     public static class ApplicationDbInitializer
@@ -44,6 +46,17 @@ namespace RemoteCheckup.Models
                     ]);
 
                     context.Users.Add(user);
+                    context.SaveChanges();
+                }
+
+                if (!context.DatabaseTargets.Any())
+                {
+                    context.DatabaseTargets.Add(new () {
+                        Name = "default-mysql",
+                        DatabaseType = DatabaseType.MySQL,
+                        ConnectionString = "server=localhost;username=root;password={{SECRET}};",
+                        ConnectionSecret = ""
+                    });
                     context.SaveChanges();
                 }
             }

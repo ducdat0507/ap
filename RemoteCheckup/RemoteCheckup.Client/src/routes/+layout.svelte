@@ -2,7 +2,7 @@
     import { onMount, setContext } from "svelte";
     import "../app.css";
     import type { Snippet } from "svelte";
-    import Icon from "@iconify/svelte";
+    import Icon, { loadIcon } from "@iconify/svelte";
     import { page } from '$app/state';
   import LogInPrompt from "../components/LogInPrompt.svelte";
 
@@ -15,6 +15,7 @@
     const slots: {
         subnav?: Snippet
     } = $state({});
+    let loginChecked = $state(false);
 
     function isPathExact(path: string): boolean {
         return page.url.pathname == path;
@@ -27,6 +28,7 @@
 
     onMount(() => {
         fetch("api/auth/whoami").then(x => x.json()).then(inf => {
+            loginChecked = true;
             Object.assign(loginInfo, inf);
             if (!loginInfo.loggedIn) {
                 navigator
@@ -35,14 +37,18 @@
     })
 
     function logOut() {
+        loginChecked = false;
         fetch("api/auth/logout", {
             method: "POST"
         }).then(x => {
+            loginChecked = true;
             if (x.status != 200) return;
             loginInfo.loggedIn = false;
             loginInfo.name = "";
         })
     }
+
+    loadIcon("ant-design:loading-outlined");
 </script>
 
 <div class="container">
@@ -71,7 +77,7 @@
                     </a>
                     <hr />
                     <a class="item" class:active={isPathIn("/settings")} href="/settings">
-                        <Icon icon="fluent:wrench-20-regular" />
+                        <Icon icon="fluent:wrench-24-regular" />
                         <span>Settings</span>
                     </a>
                     <span></span>
@@ -92,12 +98,34 @@
         <main>
             {@render children()}
         </main>
-    {:else}
+    {:else if loginChecked}
         <LogInPrompt />
+    {:else}
+        <div class="preloader">
+            <div>
+                <Icon class="spinner" icon="ant-design:loading-outlined" width="3em" />
+            </div>
+        </div>
     {/if}
 </div>
 
 <style>
+    .preloader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .preloader :global(.spinner) {
+        animation: .6s linear infinite spinner-spin;
+    }
+    @keyframes spinner-spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
     .container {
         display: flex;
         flex-direction: row;

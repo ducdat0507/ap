@@ -37,7 +37,7 @@
 {#snippet subnav()}
     {#each info?.servers as server}
         <hr />
-        <h2 class="db-title">{(server.type ?? "").toUpperCase()}</h2>
+        <h2 class="db-title"><b>{(server.type ?? "").toUpperCase()}</b> {server.name}</h2>
         {#each server.databases as db}
             <button class="item">
                 <div class="section">
@@ -59,5 +59,6 @@
         margin: 0;
         font-size: .8em;
         color: #cccc;
+        font-weight: normal;
     }
 </style>

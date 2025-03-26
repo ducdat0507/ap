@@ -38,6 +38,10 @@ import Popup from "./Popup.svelte";
     }
 </script>
 
+<svelte:head>
+    <title>Welcome</title>
+</svelte:head>
+
 <Popup>
     <h1>Welcome</h1>
     <Form {busy} onsubmit={logIn}>

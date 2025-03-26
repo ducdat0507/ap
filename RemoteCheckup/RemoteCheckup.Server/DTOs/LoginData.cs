@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace RemoteCheckup.DTOs
 {
     [Serializable]
-    public class LoginInfo
+    public class LoginData
     {
         [JsonPropertyName("username")]
         public string Username { get; set; } = "";
