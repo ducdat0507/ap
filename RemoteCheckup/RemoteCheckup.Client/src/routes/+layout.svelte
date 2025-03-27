@@ -1,15 +1,26 @@
 <script lang="ts">
-    import { setContext } from "svelte";
+    import { onMount, setContext } from "svelte";
     import "../app.css";
     import type { Snippet } from "svelte";
-    import Icon from "@iconify/svelte";
+    import Icon, { loadIcon } from "@iconify/svelte";
     import { page } from '$app/state';
+  import LogInPrompt from "../components/LogInPrompt.svelte";
 
     let { children } = $props();
 
+    const loginInfo = $state({ 
+        loggedIn: false,
+        name: "",
+    });
     const slots: {
         subnav?: Snippet
     } = $state({});
+    const popups: {
+        popups: Snippet[]
+    } = $state({
+        popups: []
+    });
+    let loginChecked = $state(false);
 
     function isPathExact(path: string): boolean {
         return page.url.pathname == path;
@@ -18,57 +29,115 @@
         return page.url.pathname.startsWith(path);
     }
     setContext('layout-slots', slots);
+    setContext('login-info', loginInfo);
+    setContext('popups', popups);
+
+    onMount(() => {
+        fetch("api/auth/whoami").then(x => x.json()).then(inf => {
+            loginChecked = true;
+            Object.assign(loginInfo, inf);
+            if (!loginInfo.loggedIn) {
+                navigator
+            }
+        });
+    })
+
+    function logOut() {
+        loginChecked = false;
+        fetch("api/auth/logout", {
+            method: "POST"
+        }).then(x => {
+            loginChecked = true;
+            if (x.status != 200) return;
+            loginInfo.loggedIn = false;
+            loginInfo.name = "";
+        })
+    }
+
+    loadIcon("ant-design:loading-outlined");
 </script>
 
 <div class="container">
-    <aside class={{
-        "has-subnav": !!slots.subnav
-    }}>
-        <nav class="nav grainy-bg">
-            <div>
-                <span></span>
-                <a class="item" class:active={isPathExact("/")} href="/">
-                    <Icon icon="fluent:home-24-regular" />
-                    <span>Overview</span>
-                </a>
-                <a class="item" class:active={isPathIn("/performance")} href="/performance">
-                    <Icon icon="fluent:top-speed-24-regular" />
-                    <span>Performance</span>
-                </a>
-                <a class="item" class:active={isPathIn("/processes")} href="/processes">
-                    <Icon icon="fluent:apps-24-regular" />
-                    <span>Processes</span>
-                </a>
-                <a class="item" class:active={isPathIn("/databases")} href="/databases">
-                    <Icon icon="fluent:database-24-regular" />
-                    <span>Databases</span>
-                </a>
-                <hr />
-                <a class="item" class:active={isPathIn("/settings")} href="/settings">
-                    <Icon icon="fluent:wrench-20-regular" />
-                    <span>Settings</span>
-                </a>
-                <span></span>
-                <button class="item danger">
-                    <Icon icon="fluent:power-24-regular" />
-                    <span>Log Out</span>
-                </button>
-            </div>
-        </nav>
-        {#if slots.subnav}
-            <nav class="subnav grainy-bg">
+    {#if loginInfo.loggedIn}
+        <aside class={{
+            "has-subnav": !!slots.subnav
+        }}>
+            <nav class="nav grainy-bg">
                 <div>
-                    {@render slots.subnav?.()}
+                    <span></span>
+                    <a class="item" class:active={isPathExact("/")} href="/">
+                        <Icon icon="fluent:home-24-regular" />
+                        <span>Overview</span>
+                    </a>
+                    <a class="item" class:active={isPathIn("/performance")} href="/performance">
+                        <Icon icon="fluent:top-speed-24-regular" />
+                        <span>Performance</span>
+                    </a>
+                    <a class="item" class:active={isPathIn("/processes")} href="/processes">
+                        <Icon icon="fluent:apps-24-regular" />
+                        <span>Processes</span>
+                    </a>
+                    <a class="item" class:active={isPathIn("/databases")} href="/databases">
+                        <Icon icon="fluent:database-24-regular" />
+                        <span>Databases</span>
+                    </a>
+                    <hr />
+                    <a class="item" class:active={isPathIn("/settings")} href="/settings">
+                        <Icon icon="fluent:wrench-24-regular" />
+                        <span>Settings</span>
+                    </a>
+                    <span></span>
+                    <button class="item danger" onclick={logOut}>
+                        <Icon icon="fluent:power-24-regular" />
+                        <span>Log Out</span>
+                    </button>
                 </div>
             </nav>
-        {/if}
-    </aside>
-    <main>
-        {@render children()}
-    </main>
+            {#if slots.subnav}
+                <nav class="subnav grainy-bg">
+                    <div>
+                        {@render slots.subnav?.()}
+                    </div>
+                </nav>
+            {/if}
+        </aside>
+        <main>
+            {@render children()}
+        </main>
+    {:else if loginChecked}
+        <LogInPrompt />
+    {:else}
+        <div class="preloader">
+            <div>
+                <Icon class="spinner" icon="ant-design:loading-outlined" width="3em" />
+            </div>
+        </div>
+    {/if}
+</div>
+
+<div class="popup-container">
+    {#each popups.popups as popup}
+        {@render popup()}
+    {/each}
 </div>
 
 <style>
+    .preloader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .preloader :global(.spinner) {
+        animation: .6s linear infinite spinner-spin;
+    }
+    @keyframes spinner-spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
     .container {
         display: flex;
         flex-direction: row;
@@ -260,5 +329,9 @@
         border: none;
         border-bottom: 1px solid #7777;
         margin: 5px;
+    }
+
+    .popup-container :global(.popup-bg) {
+        background: #000a;
     }
 </style>

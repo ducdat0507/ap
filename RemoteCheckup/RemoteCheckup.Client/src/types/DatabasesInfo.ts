@@ -3,6 +3,7 @@ export interface DatabasesInfo {
 }
 
 export interface DatabaseServerInfo {
+    name: string;
     type: string;
     databases: DatabaseInfo[];
 }

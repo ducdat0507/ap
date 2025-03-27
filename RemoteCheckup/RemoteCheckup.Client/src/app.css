@@ -84,3 +84,13 @@ body {
         --bg-color: #bbb6;
     }
 }
+
+button, input {
+    background: #0007;
+    border: 1px solid #ccc;
+    font-size: 1em;
+    color: inherit;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: box-shadow .2s, border-color .2s;
+}

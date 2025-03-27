@@ -13,7 +13,7 @@ namespace RemoteCheckup.Services
         private readonly IHubContext<ProcessesCheckupHub> _hubContext;
         private readonly ILogger<PeriodicProcessCheckupService> _logger;
 
-        private ProcessCheckupProbe subService;
+        private ProcessCheckupProbe? subService;
 
         public PeriodicProcessCheckupService(IHubContext<ProcessesCheckupHub> hubContext, ILogger<PeriodicProcessCheckupService> logger)
         {

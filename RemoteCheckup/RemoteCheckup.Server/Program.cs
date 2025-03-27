@@ -17,13 +17,20 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => {
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
-builder.Services.AddAuthentication(options =>
+builder.Services.AddAuthentication("CookieAuth").AddCookie("CookieAuth", options =>
 {
-    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-}).AddCookie();
+    options.Cookie.Name = "remotecheckup-identity";
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Events = new CookieAuthenticationEvents
+    {
+        OnRedirectToLogin = redirectContext =>
+        {
+            redirectContext.HttpContext.Response.StatusCode = 401;
+            return Task.CompletedTask;
+        }
+    };        
+});
 
-builder.Services.AddSingleton<IUserIdProvider, NameUserIdProvider>();
 builder.Services.AddSignalR();
 
 builder.Services.AddHostedService<PeriodicPerformanceCheckupService>();
@@ -33,6 +40,16 @@ builder.Services.AddHostedService<PeriodicDatabaseCheckupService>();
 builder.Services.AddControllers();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    var context = services.GetRequiredService<ApplicationDbContext>();    
+    context.Database.Migrate();
+
+    ApplicationDbInitializer.SeedDefaultUser(services);
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
