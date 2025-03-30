@@ -11,13 +11,19 @@ namespace RemoteCheckup.Probes
     public class PerformanceCheckupOnWindowsProbe : PerformanceCheckupProbe
     {
         private ManagementObjectSearcher cpuSearcher;
+        private ManagementObjectSearcher driveSearcher;
 
         private Dictionary<string, ulong> lastCpuTime = new();
         private Dictionary<string, ulong> lastCpuTimestamp = new();
 
+        private Dictionary<string, ulong> lastDriveRead = new();
+        private Dictionary<string, ulong> lastDriveWrite = new();
+        private Dictionary<string, ulong> lastDriveTimestamp = new();
+
         public PerformanceCheckupOnWindowsProbe()
         {
             cpuSearcher = new("select * from Win32_PerfRawData_PerfOS_Processor");
+            driveSearcher = new("select * from Win32_PerfRawData_PerfDisk_PhysicalDisk");
         }
 
         public override void GetCPUInfo(PerformanceInfo info) 
@@ -70,7 +76,63 @@ namespace RemoteCheckup.Probes
 
         public override void GetDriveInfo(PerformanceInfo info)
         {
-            // TODO Implement this
+            var driveTimes = driveSearcher.Get()
+                .Cast<ManagementObject>()
+                .Select(mo => new
+                {
+                    Name = (string)mo["Name"],
+                    Index = (string)mo["Name"] == "_Total" ? -1 : Convert.ToInt32(((string)mo["Name"]).Split(" ")[0]),
+                    ReadBytes = (ulong)mo["DiskReadBytesPersec"],
+                    WriteBytes = (ulong)mo["DiskWriteBytesPersec"],
+                    Timestamp = (ulong)mo["Timestamp_PerfTime"],
+                }
+                )
+                .ToList();
+
+            var volumes = System.IO.DriveInfo.GetDrives();
+
+            foreach (var dt in driveTimes)
+            {
+                if (dt.Index < 0) continue;
+
+                ulong readDelta = lastDriveRead.TryGetValue(dt.Name, out ulong lastReadBytes)
+                    ? (dt.ReadBytes - lastReadBytes) : 0;
+                ulong writeDelta = lastDriveWrite.TryGetValue(dt.Name, out ulong lastWriteBytes)
+                    ? (dt.WriteBytes - lastWriteBytes) : 0;
+                ulong duration = lastDriveTimestamp.TryGetValue(dt.Name, out ulong lastTimestamp)
+                    ? (dt.Timestamp - lastTimestamp) : 0;
+
+                info.Drives.Add(new DTOs.DriveInfo()
+                {
+                    Name = dt.Name,
+                    IsHDD = null,
+                    ReadSpeed = (ulong)(readDelta / (float)duration * TimeSpan.TicksPerSecond),
+                    WriteSpeed = (ulong)(writeDelta / (float)duration * TimeSpan.TicksPerSecond),
+                });
+
+                lastDriveRead[dt.Name] = dt.ReadBytes;
+                lastDriveWrite[dt.Name] = dt.WriteBytes;
+                lastDriveTimestamp[dt.Name] = dt.Timestamp;
+            }
+
+            foreach (var vol in volumes)
+            {
+                int index = info.Drives.FindIndex(x => x.Name.Contains(vol.Name[0] + ":"));
+                if (index < 0) index = info.Drives.Count - 1;
+                try
+                {
+                    info.Drives[index].Partitions.Add(new PartitionInfo()
+                    {
+                        Name = $"{vol.Name} {vol.VolumeLabel}",
+                        TotalBytes = (ulong)vol.TotalSize,
+                        UsedBytes = (ulong)(vol.TotalSize - vol.AvailableFreeSpace)
+                    });
+                }
+                catch (Exception e)
+                {
+                    Console.Error.WriteLine($"Retrieving drive {vol.Name} info failed: \n - {e}");
+                }
+            }
         }
 
 
