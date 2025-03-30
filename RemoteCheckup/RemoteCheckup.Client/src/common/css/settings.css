@@ -1,0 +1,10 @@
+.setting-section {
+    border: 1px solid #aaa;
+    padding: 0 10px;
+    margin-block: 10px;
+    border-radius: 5px;
+}
+
+.setting-section > * {
+    margin-block: 10px;
+}

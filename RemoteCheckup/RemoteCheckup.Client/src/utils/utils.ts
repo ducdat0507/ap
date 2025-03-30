@@ -37,6 +37,13 @@ export function getPortStatus(portNo: number) {
     }
 }
 
+export let databaseTypes: { [x: number]: string | undefined } = {
+    0: "mysql"
+}
+export function getDatabaseType(dbNo: number) {
+    return databaseTypes[dbNo] ?? "unknown";
+}
+
 export function formatPrefix(num: number, binary: boolean = false) {
     const base = binary 
         ? 1024 

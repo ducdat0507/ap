@@ -13,6 +13,10 @@
     let busy = $state("");
     let error = $state("");
 
+    function onhide() {
+        oldPassword = newPassword = newPassword2 = busy = error = "";
+    }
+
     function changePassword(e: SubmitEvent) {
         e.preventDefault();
         if (newPassword != newPassword2) {
@@ -42,8 +46,8 @@
     }
 </script>
 
-<Popup bind:this={popup}>
-    <h2>change password</h2>
+<Popup bind:this={popup} {onhide}>
+    <h2>Change password</h2>
     <Form {busy} onsubmit={changePassword}>
         <hr/>
         {#if !!error}

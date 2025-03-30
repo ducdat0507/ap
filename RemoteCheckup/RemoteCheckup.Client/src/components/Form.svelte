@@ -8,7 +8,7 @@
 </script>
 
 
-<form class="form" class:busy={!!busy} {...formArgs}>
+<form {...formArgs} class:form={true} class:busy={!!busy}>
     {@render children()}
 </form>
 
@@ -35,16 +35,16 @@
     .form :global(:is(> div > label, .form .flex-space)) {
         flex: 1;
     }
-    .form :global(input) {
+    .form :global(:is(input, select)) {
         width: 100%;
         box-shadow: inset 0 5px 10px black;
     }
-    .form :global(:is(button, input):focus-visible) {
+    .form :global(:is(button, input, select):focus-visible) {
         outline: none;
         border-color: white;
         box-shadow: 0 0 0 2px #acf;
     }
-    .form :global(input:focus-visible) {
+    .form :global(:is(input, select):focus-visible) {
         box-shadow: inset 0 5px 10px black, 0 0 0 2px #acf;
     }
     .form :global(input[type="checkbox"]) {
@@ -92,5 +92,21 @@
         border: 1px solid #fcc;
         padding: 5px 10px;
         border-radius: 5px;
+    }
+
+    .form:global(.detailed) {
+        width: 500px;
+    }
+    .form:global(.detailed) :global(> div:not(.error)) {
+        display: flex;
+        align-items: baseline;
+        gap: 1ch;
+    }
+    .form:global(.detailed) :global(> div:not(.error) > label) {
+        width: 200px;
+        text-align: end;
+    }
+    .form:global(.detailed) :global(> div:not(.error) > label + *) {
+        flex: 1;
     }
 </style>

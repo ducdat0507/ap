@@ -33,9 +33,12 @@ builder.Services.AddAuthentication("CookieAuth").AddCookie("CookieAuth", options
 
 builder.Services.AddSignalR();
 
-builder.Services.AddHostedService<PeriodicPerformanceCheckupService>();
-builder.Services.AddHostedService<PeriodicProcessCheckupService>();
-builder.Services.AddHostedService<PeriodicDatabaseCheckupService>();
+builder.Services.AddSingleton<PeriodicPerformanceCheckupService>();
+builder.Services.AddHostedService(p => p.GetRequiredService<PeriodicPerformanceCheckupService>());
+builder.Services.AddSingleton<PeriodicProcessCheckupService>();
+builder.Services.AddHostedService(p => p.GetRequiredService<PeriodicProcessCheckupService>());
+builder.Services.AddSingleton<PeriodicDatabaseCheckupService>();
+builder.Services.AddHostedService(p => p.GetRequiredService<PeriodicDatabaseCheckupService>());
 
 builder.Services.AddControllers();
 

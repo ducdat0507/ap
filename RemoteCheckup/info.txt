@@ -1,0 +1,42 @@
+RemoteCheckup
+
+=== Features ===
+
+View server's performance (cpu, memory, drive and network)
+View server's active processes, services, and network ports
+View server's active databases
+
+=== Instructions ===
+
+- Prerequisites:
+    + .NET 8 is installed
+    + MySQL server is installed and running
+- Before starting:
+    + Make sure the connection string in appsettings.json is configured correctly
+- Start by running the RemoteCheckup.Server executable, this will start the server
+- Use your web browser to connect to the server at port 5000. Log in when prompted
+    + If this is the first time running the executable, enter the credentials found
+    in the !default-user file in the executable folder
+- When logged in, you can navigate using the menu on the right
+- For database connections, configure them in Options > Probes
+
+=== Project structure
+- RemoteCheckup.Client
+    - src/                 Source folder
+        - common/          Commonly used CSS files
+        - components/      Svelte components
+        - routes/          SvelteKit routes
+        - types/           TypeScript types
+        - utils/           Shared utility functions
+    - static/              Static files
+- RemoteCheckup.Server
+    - Controllers/         API controllers
+    - DTOs/                Data-transfer objects, used for communicating with client
+    - Hubs/                SignalR hubs
+    - Migrations/          Database migrations
+    - Models/              Database models
+    - Probes/              Checkup probes
+    - Properties/          Server launch properties
+    - Services/            Background services
+    - Utilities/           Shared utility functions
+    * Program.cs           Startup configurations

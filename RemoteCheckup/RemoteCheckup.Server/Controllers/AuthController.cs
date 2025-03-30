@@ -66,7 +66,7 @@ namespace RemoteCheckup.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> ChangePassword([FromBody] PasswordChangeData info)
         {
-            var user = await _userManager.GetUserAsync(User);
+            var user = await _userManager.GetUserAsync(HttpContext.User);
             if (user == null)
             {
                 return Unauthorized(new
@@ -85,8 +85,7 @@ namespace RemoteCheckup.Controllers
             }
             return Unauthorized(new
             {
-                message = "Something went wrong",
-                errors = string.Join("\n", result.Errors.Select(x => x.Description))
+                message = string.Join("\n", result.Errors.Select(x => x.Description))
             });
         }
     }

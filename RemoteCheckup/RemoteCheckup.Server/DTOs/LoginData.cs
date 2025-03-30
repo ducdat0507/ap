@@ -8,25 +8,27 @@ namespace RemoteCheckup.DTOs
     public class LoginData
     {
         [JsonPropertyName("username")]
+        [Required]
         public string Username { get; set; } = "";
         [JsonPropertyName("password")]
-        [DataType(DataType.Password)]
+        [Required][DataType(DataType.Password)]
         public string Password { get; set; } = "";
         [JsonPropertyName("persist")]
+        [Required]
         public bool RememberMe { get; set; } = false;
     }
 
     [Serializable]
     public class PasswordChangeData
     {
-        [JsonPropertyName("old")]
-        [DataType(DataType.Password)]
+        [JsonPropertyName("oldPassword")]
+        [Required][DataType(DataType.Password)]
         public string OldPassword { get; set; } = "";
-        [JsonPropertyName("new")]
-        [DataType(DataType.Password)]
+        [JsonPropertyName("newPassword")]
+        [Required][DataType(DataType.Password)]
         public string NewPassword { get; set; } = "";
-        [JsonPropertyName("new2")]
-        [DataType(DataType.Password)]
+        [JsonPropertyName("newPassword2")]
+        [Required][DataType(DataType.Password)]
         [Compare("NewPassword", ErrorMessage = "New password and confirmation must match")]
         public string NewPassword2 { get; set; } = "";
     }

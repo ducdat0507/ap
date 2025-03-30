@@ -1,11 +1,12 @@
 <svelte:head>
-    <title>Processes</title>
+    <title>Settings</title>
 </svelte:head>
 
 <script lang="ts">
   import Icon from '@iconify/svelte';
 import { getContext, onDestroy, onMount, type Snippet } from 'svelte';
     import AccountSettings from '../../components/settings/AccountSettings.svelte';
+  import ProbeSettings from '../../components/settings/ProbeSettings.svelte';
 
     let tab = $state("general");
 
@@ -42,7 +43,7 @@ import { getContext, onDestroy, onMount, type Snippet } from 'svelte';
 {#if tab == "general"}
     <h2>General</h2>
 {:else if tab == "probes"}
-    <h2>Probes</h2>
+    <ProbeSettings />
 {:else if tab == "account"}
     <AccountSettings />
 {/if}

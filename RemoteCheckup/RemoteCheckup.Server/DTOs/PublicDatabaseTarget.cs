@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 using RemoteCheckup.Models;
 
 namespace RemoteCheckup.Server.DTOs
@@ -6,11 +7,18 @@ namespace RemoteCheckup.Server.DTOs
     [Serializable]
     public class PublicDatabaseTarget
     {
-        public int Id { get; set; }
+        [JsonPropertyName("id")]
+        public int? Id { get; set; }
+        [JsonPropertyName("name")]
         public string Name { get; set; } = "";
+        [JsonPropertyName("type")]
         public DatabaseType DatabaseType { get; set; }
-        public string ConnectionString { get; set; }
+        [JsonPropertyName("connString")]
+        public string ConnectionString { get; set; } = "";
+        [JsonPropertyName("connSecret")]
         public string? ConnectionSecret { get; set; }
+
+        public PublicDatabaseTarget() {}
 
         public PublicDatabaseTarget(DatabaseTarget info) 
         {

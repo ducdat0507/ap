@@ -21,9 +21,16 @@ namespace RemoteCheckup.Probes
 
         private bool EnsureConnection() 
         {
-            if (connection == null || connection.IsDisposed)
-                connection = new MySqlConnection(connectionString);
-            return connection != null;
+            try
+            {
+                if (connection == null || connection.IsDisposed)
+                    connection = new MySqlConnection(connectionString);
+                return connection != null;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public override void GetDatabaseInfo(DatabaseServerInfo info)
